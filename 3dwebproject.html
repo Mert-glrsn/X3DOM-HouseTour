@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FPS Game-like Environment</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <script>
+    // Create the scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    document.body.appendChild(renderer.domElement);
+
+    // Movement control and collision detection variables
+    const movementSpeed = 0.1;
+    const collisionDistance = 0.5; // Distance from the wall to detect collision
+
+    // Room 1
+    const room1 = new THREE.Group();
+
+    const wall1 = new THREE.Mesh(new THREE.BoxGeometry(11, 5, 1), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    wall1.position.set(-4.5, 2.5, 0);
+    room1.add(wall1);
+
+    const wall2 = new THREE.Mesh(new THREE.BoxGeometry(11, 5, 1), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    wall2.position.set(4.5, 2.5, 0);
+    room1.add(wall2);
+
+    const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 5, 11), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    wall3.position.set(-10, 2.5, 5);
+    room1.add(wall3);
+
+    const wall4 = new THREE.Mesh(new THREE.BoxGeometry(1, 5, 5), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    wall4.position.set(1, 2.5, 3);
+    room1.add(wall4);
+
+    const wall5 = new THREE.Mesh(new THREE.BoxGeometry(11, 5, 1), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    wall5.position.set(4.5, 2.5, 10);
+    room1.add(wall5);
+
+    const wall6 = new THREE.Mesh(new THREE.BoxGeometry(11, 5, 1), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    wall6.position.set(-4.5, 2.5, 10);
+    room1.add(wall6);
+
+    const wall7 = new THREE.Mesh(new THREE.BoxGeometry(1, 5, 7), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    wall7.position.set(10, 2.5, 7);
+    room1.add(wall7);
+
+    scene.add(room1);
+
+    // Ground
+    const groundWidth = 50;
+    const groundHeight = 50;
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+    const groundGeometry = new THREE.PlaneGeometry(groundWidth, groundHeight);
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.position.y = -0.55;
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    
+
+    // Lights
+    const light = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(light);
+
+    const light2 = new THREE.PointLight(0xff0000, 2);
+    light2.position.set(6, 2.5, 6);
+    scene.add(light2);
+
+    const light3 = new THREE.PointLight(0x7CFC00, 2);
+    light3.position.set(-6, 2.5, 4);
+    scene.add(light3);
+
+    const light2Helper = new THREE.PointLightHelper(light2, 1);
+    scene.add(light2Helper);
+
+    const light3Helper = new THREE.PointLightHelper(light3, 1);
+    scene.add(light3Helper);
+
+
+    // Buttons
+    const switchWidth = 0.4;
+    const switchHeight = 0.4;
+    const switchDepth = 0.2;
+    const switchMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const switchGeometry = new THREE.BoxGeometry(switchWidth, switchHeight, switchDepth);
+
+    const switchMesh = new THREE.Mesh(switchGeometry, switchMaterial);
+    switchMesh.position.set(8, 2.5, 0.5);
+    scene.add(switchMesh);
+    switchMesh.isSwitchedOn = false; // Initial switch state
+
+    const switch2Mesh = new THREE.Mesh(switchGeometry, switchMaterial);
+    switch2Mesh.position.set(-7, 2.5, 0.5);
+    scene.add(switch2Mesh);
+    switch2Mesh.isSwitchedOn = false; // Initial switch state
+
+    switchMesh.toggleSwitch = function() {
+      this.isSwitchedOn = !this.isSwitchedOn;
+      if (this.isSwitchedOn) {
+        // Perform actions when the switch is turned on
+        console.log('Switch turned on');
+        light2.visible = true; // Turn on the light
+      } else {
+        // Perform actions when the switch is turned off
+        console.log('Switch turned off');
+        light2.visible = false; // Turn off the light
+      }
+    };
+
+    switch2Mesh.toggleSwitch = function() {
+      this.isSwitchedOn = !this.isSwitchedOn;
+      if (this.isSwitchedOn) {
+        // Perform actions when the second switch is turned on
+        console.log('Second switch turned on');
+        light3.visible = true; // Turn on the light
+      } else {
+        // Perform actions when the second switch is turned off
+        console.log('Second switch turned off');
+        light3.visible = false; // Turn off the light
+      }
+    };
+
+    // Detect mouse clicks on the switches
+    window.addEventListener('click', function(event) {
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects([switchMesh, switch2Mesh]);
+
+      if (intersects.length > 0) {
+        const clickedSwitch = intersects[0].object;
+        clickedSwitch.toggleSwitch();
+      }
+    });
+
+    // Navigation using mouse and keyboard input
+    const mouse = new THREE.Vector2();
+    const keyboard = {};
+
+    document.addEventListener('mousemove', (event) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      // Rotate camera based on mouse movement
+      camera.rotation.y = mouse.x * Math.PI;
+    });
+
+    document.addEventListener('keydown', (event) => {
+      keyboard[event.code] = true;
+    });
+
+    document.addEventListener('keyup', (event) => {
+      keyboard[event.code] = false;
+    });
+
+    function handleCollisions() {
+      const originPoint = camera.position.clone();
+
+      // Get the direction the camera is facing
+      const forwardVector = new THREE.Vector3();
+      camera.getWorldDirection(forwardVector);
+
+      const raycaster = new THREE.Raycaster(originPoint, forwardVector);
+      const intersects = raycaster.intersectObjects([room1], true);
+
+      if (intersects.length > 0) {
+        const collisionDistance = intersects[0].distance;
+
+        if (collisionDistance < movementSpeed) {
+          // Prevent camera from moving forward if a collision is detected
+          camera.position.z += forwardVector.z * (collisionDistance - movementSpeed);
+          camera.position.x += forwardVector.x * (collisionDistance - movementSpeed);
+        }
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Move camera based on keyboard input
+      if (keyboard['KeyD']) {
+        camera.rotation.y -= 0.05; // Adjust the rotation speed as needed
+      }
+      if (keyboard['KeyA']) {
+        camera.rotation.y += 0.05; // Adjust the rotation speed as neededww
+      }
+
+      // Move camera based on keyboard input
+      if (keyboard['KeyW']) {
+        camera.position.z -= Math.cos(camera.rotation.y) * movementSpeed;
+        camera.position.x -= Math.sin(camera.rotation.y) * movementSpeed;
+      }
+      if (keyboard['KeyS']) {
+        camera.position.z += Math.cos(camera.rotation.y) * movementSpeed;
+        camera.position.x += Math.sin(camera.rotation.y) * movementSpeed;
+      }
+
+      handleCollisions();
+
+      renderer.render(scene, camera);
+    }
+
+    // Set initial camera position
+    camera.position.y = 2.5;
+
+    // Start the animation loop
+    animate();
+  </script>
+</body>
+</html>
